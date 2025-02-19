@@ -1,0 +1,21 @@
+etl_id,name,description
+1,Загрузка в stage,"Преобразовав файл источник SQL note (копия).xlsx в CSV формат   загружаю в postgres stage.sql_functions, добавил в таблицу поле времени загрузки данных loaded_dttm"
+2,Создание справочника,"Создаю справочник типов , взяв значение distinct function_type из stage.sql_functions"
+3,Создание справочника,"Создаю справочник баз данных , 1 - mysql и 2 — postgresql"
+4,Загрузка из stage в detail,"Загружаю данные из таблицы stage.sql_functions в таблицу detail.function с внешними ключами type_id и db_id таблиц detail.type и detail.database соответственно, добавив в таблицу поля processed_dttm, effective_from_dttm, effective_to_dttm, deleted_flg"
+5,Загрузка в stage,"Преобразовав файл источник SQL note ALENA.xlsx в CSV формат загружаю его в stage.sql_functions_alena, добавил в таблицу поле времени загрузки данных loaded_dttm"
+6,Загрузка из stage в detail,Загружаю данные из таблицы stage.sql_functions_alena в таблицу detail.function 
+7,Загрузка в stage,"Преобразовав файл источник Function_sql_Slava.xlxsв CSV формат загружаю его в stage.sql_functions_slava, добавил в таблицу поле времени загрузки данных loaded_dttm"
+8,Загрузка из stage в detail,Загружаю данные из таблицы stage.sql_functions_slava в таблицу detail.function 
+9,Загрузка в stage,Преобразовав файл источник SQL note (копия).xlsx в CSV формат   загружаю в postgres stage.queries_stepik
+10,Создание справочника разделов,"Создаю справочник разделов distinct.sections, взяв значение distinct section из stage.queries_stepik"
+11,Загрузка из stage в detail,Загружаю данные из таблицы stage.queries_stepik в таблицу detail.queries с внешним ключом section_id таблицы detail.queries
+12,Загрузка в stage,Преобразовав файл источник SQL note ALENA.xlsx в CSV формат   загружаю в postgres stage.queries_alena
+13,Загрузка из stage в detail,Загружаю данные из таблицы stage.queries_alena в таблицу detail.queries
+14,Очистка stage,Очистка Таблицы слоя stage перед загрузкой туда новых данных
+15,Инкрементальная загрузка в stage,Преобразовав файл источник SQL note (копия).xlsx в CSV формат   загружаю в postgres stage.sql_functions
+16,Инкрементальная загрузка из stage в detail,"Загружаю данные из таблицы stage.sql_functions в таблицу detail.function с внешними ключами type_id и db_id таблиц detail.type и detail.database соответственно, добавив в таблицу поля processed_dttm, effective_from_dttm, effective_to_dttm, deleted_flg"
+17,Инкрементальная загрузка в stage,Преобразовав файл источник SQL note ALENA.xlsx в CSV формат загружаю его в stage.sql_functions_alena
+18,Инкрементальная загрузка из stage в detail,Загружаю данные из таблицы stage.sql_functions_alena в таблицу detail.function 
+19,Инкрементальная загрузка в stage,Преобразовав файл источник Function_sql_Slava.xlxsв CSV формат загружаю его в stage.sql_functions_slava
+20,Инкрементальная загрузка из stage в detail,Загружаю данные из таблицы stage.sql_functions_slava в таблицу detail.function 
