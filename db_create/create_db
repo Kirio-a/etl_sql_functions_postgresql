@@ -35,7 +35,7 @@ CREATE TABLE stage.sql_functions (
   );
 
 6. Импорт данных из файла csv:
-      copy stage.sql_functions 
+      copy stage.sql_functions(function_type, description, function_mysql, argument_func_mysql, function_postgresql, argument_func_postgresql, "returns", detailed_description, examples_mysql, examples_postgresql, replacing) 
         FROM '/tmp/SQL_functions.csv'
         with(format csv, header true, DELIMITER ',', encoding UTF8); 
 
@@ -174,7 +174,7 @@ CREATE TABLE stage.sql_functions_alena (
 );
 
 19. Импорт данных из файла csv:
-      copy stage.sql_functions_alena 
+      copy stage.sql_functions_alena(function_type, function_mysql, description, "returns", argument_func_mysql, detailed_description, replacing, examples_mysql) 
         FROM '/tmp/SQL note ALENA.csv' 
         with(format csv, header true, DELIMITER ',', encoding UTF8); 
 
@@ -223,14 +223,15 @@ CREATE TABLE stage.sql_functions_alena (
 22. Преобразование листа xlsx в csv формат чарез: сохранить как, указав SQL note ALENA.csv.
 
 23. Создание таблицы в схеме Stage для загрузки данных.
-CREATE TABLE stage.slava_tren (
+CREATE TABLE stage.sql_function_slava (
 	function_sql text NULL,
 	description text NULL,
 	detail_description text NULL,
+    loaded_dttm information_schema."time_stamp" DEFAULT CURRENT_TIMESTAMP NULL
 );
 
 24. Импорт данных из файла csv:
-  copy stage.sql_functions_slava 
+  copy stage.sql_functions_slava(function_sql, description, detail_description) 
     FROM '/tmp/Functions_SQL_Slava.csv' 
     with(format csv, header true, DELIMITER ',', encoding UTF8);
 
@@ -252,5 +253,74 @@ CREATE TABLE stage.slava_tren (
 		  , current_timestamp as effective_from_dttm
 		  , '2100.01.01'::timestamp as effective_to_dttm
 	  from stage.sql_functions_slava sfs;
+
+------------------------------------------------------------------------------------------------------
+Создание вспомогательных таблиц
+
+1. Создаю таблицу detail.dq в которой отображается аналитика изменения в detail.function после очередной инкрементальной загрузки
+  CREATE TABLE detail.dq (
+	  id text DEFAULT nextval('detail.dq_id_seq'::regclass) NOT NULL,
+	  test_name varchar NOT NULL,
+	  table_name varchar NULL,
+	  field_name varchar NULL,
+	  result_test varchar NULL,
+	  created_dttm information_schema."time_stamp" NOT NULL,
+	  started_dttm information_schema."time_stamp" NULL,
+	  finished_dttm information_schema."time_stamp" DEFAULT NULL::timestamp with time zone NULL,
+	  etl_run_id int4 NOT NULL
+  );
+
+2. Создание таблицы stage.etl_s2t для загрузки туда данных ИТЛ процесса (S2T)
+  CREATE TABLE stage.etl_s2t (
+	  etl_id int4 NULL,
+	  "name" text NULL,
+	  description text NULL
+  );
+
+3. Подготовка и преобразование документа S2T.xlsx в csv файл S2T.csv (ч-з сохранить как)
+
+4. Импорт данных из файла csv:
+      copy stage.etl_s2t 
+		FROM '/tmp/S2T.csv' 
+		WITH CSV HEADER DELIMITER ','; 
+
+5. Создание таблицы detail.etl
+  CREATE TABLE detail.etl (
+	  id int4 NOT NULL,
+	  code varchar NULL,
+	  "name" varchar NULL,
+	  description varchar NOT NULL,
+	  p_id int4 NULL,
+	  CONSTRAINT etl_pk PRIMARY KEY (id)
+  );
+
+6. Переношу данные таблицы в detail.etl
+  insert into detail.etl(id
+	  , name
+	  , description)
+  select etl_id
+	  , name
+	  , description
+  from stage.etl_s2t est; 
+
+7. Создание структуры таблицы detail.etl_run для отображения данных по всем инкрементальным загрузкам
+  CREATE TABLE detail.etl_run (
+	  id serial4 NOT NULL,
+	  etl_id int4 NOT NULL,
+	  started_dttm information_schema."time_stamp" DEFAULT CURRENT_TIMESTAMP NULL,
+	  finished_dttm information_schema."time_stamp" NULL,
+	  status varchar NULL,
+	  info text NULL,
+	  etl_p_id int4 NULL,
+	  CONSTRAINT etl_run_pk PRIMARY KEY (id)
+  );
+
+
+
+
+
+
+
+
 
 
