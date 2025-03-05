@@ -5,7 +5,7 @@ step_num=1
 
 echo "1. Проверка слоя stage на наличие новых данных"
 echo "-----------------------------------------------------"
-
+db_settings='| PGPASSWORD=$pgpswd psql -d mydb'
 # 1.1. Проверка источника Slava
 etl_id=20
 # проверка по дате изменений в stage
@@ -20,7 +20,6 @@ stage_finished=${array[2]}
 RESULT=$(echo "SELECT detail.check_etl_finish($etl_id, $step_num)" | PGPASSWORD=$pgpswd psql -d mydb)
 array=($RESULT)
 detail_finished_slava=${array[2]} 
-
 
 if [[ $today == 't' && $stage_finished == 't' && $detail_finished_slava != 't' ]]
     then 
