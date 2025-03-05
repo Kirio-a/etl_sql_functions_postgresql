@@ -1,0 +1,615 @@
+1. Процедура заполнения detail.dq данными
+  CREATE OR REPLACE PROCEDURE filling_dq(p_etl_id int)
+  LANGUAGE plpgsql
+  AS $$
+  begin
+  -- подсчет числа записей в таблице
+	  insert into detail.dq (test_name, table_name, field_name, result_test, created_dttm, started_dttm, finished_dttm, etl_run_id) 
+		  select 'num_of_records' as test_name 
+			  , 'detail."function"' as table_name 
+			  , 'all_fields' as field_name
+			  , count(*)  as result_test
+			  , current_timestamp as created_dttm
+			  , current_timestamp as started_dttm
+			  , '2100.01.01'::timestamp as finished_dttm
+			  , p_etl_id
+		  from detail."function" df
+	  ;
+  -- Проверка на дубликаты
+	  insert into detail.dq (test_name, table_name, field_name, result_test, created_dttm, started_dttm, finished_dttm, etl_run_id) 
+	  select 'duplicates' as test_name 
+		  , 'detail."function"' as table_name 
+		  , 'all_fields' as field_name
+		  , coalesce((select count(*)
+					  from detail."function" df
+					  group by df.*
+					  having count(*) > 1), 0) as result_test
+		  , current_timestamp as created_dttm
+		  , current_timestamp as started_dttm
+		  , '2100.01.01'::timestamp as finished_dttm
+		  , p_etl_id
+	  ;
+  -- Процент заполнения полей
+	  insert into detail.dq (test_name, table_name, field_name, result_test, created_dttm, started_dttm, finished_dttm, etl_run_id) 
+	  select 'field_filling_pt' as test_name 
+		  , 'detail."function"' as table_name 
+		  , 'name' as field_name
+		  , round(1.*count("name")/count(*)*100, 2) as result_test
+		  , current_timestamp as created_dttm
+		  , current_timestamp as started_dttm
+		  , '2100.01.01'::timestamp as finished_dttm
+		  , p_etl_id
+	  from detail."function" df
+	  union all
+	  select 'field_filling_pt' as test_name 
+		  , 'detail."function"' as table_name 
+		  , 'description' as field_name
+		  , round(1.*count(description)/count(*)*100, 2) as result_test
+		  , current_timestamp as created_dttm
+		  , current_timestamp as started_dttm
+		  , '2100.01.01'::timestamp as finished_dttm
+		  , p_etl_id
+	  from detail."function" df
+	  union all
+	  select 'field_filling_pt' as test_name 
+		  , 'detail."function"' as table_name 
+		  , 'arguments' as field_name
+		  , round(1.*count(arguments)/count(*)*100, 2) as result_test
+		  , current_timestamp as created_dttm
+		  , current_timestamp as started_dttm
+		  , '2100.01.01'::timestamp as finished_dttm
+		  , p_etl_id
+	  from detail."function" df
+	  union all
+	  select 'field_filling_pt' as test_name 
+		  , 'detail."function"' as table_name 
+		  , 'returns' as field_name
+		  , round(1.*count(returns)/count(*)*100, 2) as result_test
+		  , current_timestamp as created_dttm
+		  , current_timestamp as started_dttm
+		  , '2100.01.01'::timestamp as finished_dttm
+		  , p_etl_id
+	  from detail."function" df
+	  union all
+	  select 'field_filling_pt' as test_name 
+		  , 'detail."function"' as table_name 
+		  , 'detailed_description' as field_name
+		  , round(1.*count(detailed_description)/count(*)*100, 2) as result_test
+		  , current_timestamp as created_dttm
+		  , current_timestamp as started_dttm
+		  , '2100.01.01'::timestamp as finished_dttm
+		  , p_etl_id
+	  from detail."function" df
+	  union all
+	  select 'field_filling_pt' as test_name 
+		  , 'detail."function"' as table_name 
+		  , 'func_type_id' as field_name
+		  , round(1.*count(func_type_id)/count(*)*100, 2) as result_test
+		  , current_timestamp as created_dttm
+		  , current_timestamp as started_dttm
+		  , '2100.01.01'::timestamp as finished_dttm
+		  , p_etl_id
+	  from detail."function" df
+	  union all
+	  select 'field_filling_pt' as test_name 
+		  , 'detail."function"' as table_name 
+		  , 'db_type_id' as field_name
+		  , round(1.*count(db_type_id)/count(*)*100, 2) as result_test
+		  , current_timestamp as created_dttm
+		  , current_timestamp as started_dttm
+		  , '2100.01.01'::timestamp as finished_dttm
+		  , p_etl_id
+	  from detail."function" df
+	  union all
+	  select 'field_filling_pt' as test_name 
+		  , 'detail."function"' as table_name 
+		  , 'examples' as field_name
+		  , round(1.*count(examples) / count(*)*100, 2) as result_test
+		  , current_timestamp as created_dttm
+		  , current_timestamp as started_dttm
+		  , '2100.01.01'::timestamp as finished_dttm
+		  , p_etl_id
+	  from detail."function" df
+	  ;
+  -- обновление предыдущей записи
+      update detail.dq
+	  set finished_dttm = current_timestamp
+	  where etl_run_id = p_etl_id - 1;
+  END; 
+  $$;
+
+2. Создание процедуры начала заполнения таблицы etl_run (возвращает id_etl_run для дальнейшего исп-я в окончании заполнения таблицы etl_run и заполнения таблицы dq)
+  CREATE OR REPLACE PROCEDURE detail.start_etl_run(IN etl_id integer, OUT etl_run_id integer)
+   LANGUAGE plpgsql
+  AS $procedure$
+  BEGIN
+    insert into detail.etl_run (
+            etl_id
+		  , started_dttm
+		  , status	)
+   	   values(
+   	      etl_id
+		  , current_timestamp
+		  , 'started')
+      returning id 
+           into etl_run_id;
+  END;
+  $procedure$
+  ;
+
+2.1. Создание функции начала заполнения таблицы etl_run (возвращает id_etl_run для дальнейшего исп-я в окончании заполнения таблицы etl_run и заполнения таблицы dq)
+CREATE OR REPLACE function detail.start_etl_run_f(a_etl_id integer, a_step_num integer)
+returns integer
+   LANGUAGE plpgsql
+  AS $function$
+  BEGIN
+    insert into detail.etl_run (
+            etl_id
+		  , started_dttm
+		  , status	
+		  , step_num)
+   	   values(
+   	      a_etl_id
+		  , current_timestamp
+		  , 'started'
+          , a_step_num);
+  
+      return (select max(id) as etl_run_id
+              from detail.etl_run e
+              where e.etl_id = a_etl_id and e.step_num = a_step_num) as aa;
+           
+  END;
+  $function$
+  ;
+
+3. Создание процедуры окончания заполнения таблицы etl_run (происходит после завершения инкрементальной загрузки)
+  CREATE OR REPLACE PROCEDURE finish_etl_run(p_etl_id int)
+  LANGUAGE plpgsql
+  AS $$
+  begin
+	  update detail.etl_run
+		  set finished_dttm = current_timestamp
+		    , status = 'finished'
+	  where id = p_etl_id;
+  END; 
+  $$;
+
+4. Создание функции проверки завершения предыдущего шага таблицы etl_run
+ CREATE OR REPLACE function detail.check_etl_finish(etl_id_var integer, step_num_var integer)
+returns boolean
+   LANGUAGE plpgsql
+  AS $function$
+  BEGIN    
+      return (	select status = 'finished' 
+				from detail.etl_run
+ 				where id = (select max(id) 
+				from detail.etl_run
+ 				where etl_id = etl_id_var and step_num = step_num_var and date_part('day', finished_dttm) = date_part('day', now())
+ 				group by etl_id, step_num));
+           
+  END;
+  $function$
+  ;
+
+4. Перенос изменений в источнике Kirill из stage в detail
+
+4.1. Процедура Добавление записи
+
+  CREATE OR REPLACE PROCEDURE insert_sql_functions()
+  LANGUAGE plpgsql
+  AS $$
+  BEGIN
+     insert into detail."function" ("name"
+						  , description
+						  , arguments
+						  , "returns"
+						  , detailed_description
+						  , func_type_id
+						  , db_type_id
+						  , examples
+						  , src_cd 
+						  , processed_dttm
+						  , effective_from_dttm
+						  , effective_to_dttm)					
+	  select sf.function_mysql
+		  , sf.description 
+		  , sf.argument_func_mysql
+		  , sf."returns" 
+		  , sf.detailed_description
+		  , t.type_id 
+		  , 1
+		  , sf.examples_mysql
+		  , 'Kirill' as src_cd                                        -- Источник 
+		  , current_timestamp as processed_dttm
+		  , current_timestamp as effective_from_dttm
+		  , '2100.01.01'::timestamp as effective_to_dttm
+	  from stage.sql_functions sf                                     -- Конкретный источник  
+	  join detail.func_type t 
+			  on sf.function_type = t."name"
+	  left join (select * from detail."function" 
+				  where src_cd = 'Kirill' and db_type_id = 1) df      -- Проверка только добавляемого источника 1- mysql
+		  on sf.function_mysql = df."name" and t.type_id = df.func_type_id  -- добавил проверку по типу ф-ции 
+	  where df."name" is null
+	  union all
+	  select sf.function_postgresql
+		  , sf.description 
+		  , sf.argument_func_postgresql
+		  , sf."returns" 
+		  , sf.detailed_description
+		  , t.type_id 
+		  , 2
+		  , case   --  Добавлениеfinish_et примеров в ячейки, где функции совпадаюд по базам данных
+			  when sf.examples_postgresql not like ('') then sf.examples_postgresql
+			  else sf.examples_mysql
+		    end
+		  , 'Kirill' as src_cd                                  -- Источник 
+		  , current_timestamp as processed_dttm
+		  , current_timestamp as effective_from_dttm
+		  , '2100.01.01'::timestamp as effective_to_dttm
+	  from stage.sql_functions sf 
+	  join detail.func_type t 
+	  on sf.function_type = t."name"
+	  left join (select * from detail."function"
+				  where src_cd = 'Kirill' and db_type_id = 2) df -- Проверка только добавляемого источника и в function 2 это postgresql             
+		  on sf.function_postgresql = df."name" and t.type_id = df.func_type_id  -- добавил проверку по типу ф-ции 
+	  where df."name" is null  and trim(sf.function_postgresql) not like ('');
+  END;
+  $$;
+
+4.2. Процедура Удаление записи
+  CREATE OR REPLACE PROCEDURE delete_sql_functions()
+  LANGUAGE plpgsql
+  AS $$
+  BEGIN
+	  with del as (
+		  select df.*
+		  from detail."function" df
+		  left join stage.sql_functions sf
+		  on sf.function_mysql = df."name"
+		  where df.src_cd = 'Kirill' and sf.function_mysql is null and df.db_type_id = 1
+		  union all
+		  select df.*
+		  from detail."function" df
+		  left join stage.sql_functions sf
+		  on sf.function_postgresql = df."name"
+		  where df.src_cd = 'Kirill' and sf.function_postgresql is null and df.db_type_id = 2
+	  )
+	  update detail."function" df2
+	  set effective_to_dttm = current_timestamp, 
+		  processed_dttm = current_timestamp,
+		  deleted_flg = 'true'
+	  from del
+	  where df2.* = del.*;
+  END;
+  $$;
+
+
+4.3. Процедура Изменение записи
+  CREATE OR REPLACE PROCEDURE update_sql_functions()
+  LANGUAGE plpgsql
+  AS $$
+  BEGIN
+  -- Изменение статуса старой записи
+      update detail."function" df2
+	  set processed_dttm = current_timestamp
+	    , effective_to_dttm = current_timestamp
+	  where exists (select df.id
+		  from stage.sql_functions sf
+		  join detail.func_type t on sf.function_type = t."name"
+		  join detail."function" df						   
+		  on sf.function_mysql = df."name" and t.type_id = df.func_type_id 
+			  and (sf.description != df.description 
+			  or sf.argument_func_mysql != df.arguments 
+			  or sf."returns" != df."returns" 
+			  or sf.detailed_description != df.detailed_description 
+			  or sf.examples_mysql != df.examples)	
+		  where df.src_cd = 'Kirill' and df.db_type_id = 1 and df2.id = df.id
+		  union all
+		  select df.id
+		  from stage.sql_functions sf
+		  join detail.func_type t on sf.function_type = t."name"
+		  join detail."function" df						   
+		  on sf.function_postgresql = df."name" and t.type_id = df.func_type_id and sf.description = df.description
+			  and (sf.argument_func_postgresql != df.arguments 
+			  or sf."returns" != df."returns" 
+			  or sf.detailed_description != df.detailed_description
+			  or case   --  Добавление примеров в ячейки, где функции совпадаюд по базам данных
+			  when sf.examples_postgresql not like ('') then sf.examples_postgresql
+			  else sf.examples_mysql
+		    end != df.examples)	
+		  where df.src_cd = 'Kirill' and df.db_type_id = 2 and df2.id = df.id
+		  );
+  -- Добавление измененной записи
+      insert into detail."function" ("name"
+						  , description
+						  , arguments
+						  , "returns"
+						  , detailed_description
+						  , func_type_id
+						  , db_type_id
+						  , examples
+						  , src_cd 
+						  , effective_from_dttm
+						  , effective_to_dttm 
+						  , processed_dttm)
+			  select sf.funcfinish_ettion_mysql
+				  , sf.description 
+				  , sf.argument_func_mysql
+				  , sf."returns" 
+				  , sf.detailed_description
+				  , t.type_id 
+				  , 1
+				  , sf.examples_mysql
+				  , 'Kirill' as src_cd
+				  , current_timestamp as effective_from_dttm 
+				  , '2100.01.01'::timestamp as effective_to_dttm                                      -- Источник 
+				  , current_timestamp as processed_dttm
+			  from stage.sql_functions sf                                     -- Конкретный источник  
+			  join detail.func_type t 
+					  on sf.function_type = t."name"
+			  join detail."function" df						   
+			  on sf.function_mysql = df."name" and t.type_id = df.func_type_id 
+			  and (sf.description != df.description 
+			  or sf.argument_func_mysql != df.arguments 
+			  or sf."returns" != df."returns" 
+			  or sf.detailed_description != df.detailed_description 
+			  or sf.examples_mysql != df.examples)	
+			  where df.src_cd = 'Kirill' and db_type_id = 1
+			  union all
+			  select sf.function_postgresql
+				  , sf.description 
+				  , sf.argument_func_postgresql
+				  , sf."returns" 
+				  , sf.detailed_description
+				  , t.type_id 
+				  , 2
+				  , sf.examples_postgresql
+				  , 'Kirill' as src_cd                                  -- Источник 
+				  , current_timestamp as effective_from_dttm 
+				  , '2100.01.01'::timestamp as effective_to_dttm                                      -- Источник 
+				  , current_timestamp as processed_dttm
+			  from stage.sql_functions sf
+			  join detail.func_type t 
+				  on sf.function_type = t."name"
+			  join detail."function" df						   
+		  on sf.function_postgresql = df."name" and t.type_id = df.func_type_id and sf.description = df.description
+			  and (sf.argument_func_postgresql != df.arguments 
+			  or sf."returns" != df."returns" 
+			  or sf.detailed_description != df.detailed_description
+			  or case   --  Добавление примеров в ячейки, где функции совпадаюд по базам данных
+			  when sf.examples_postgresql not like ('') then sf.examples_postgresql
+			  else sf.examples_mysql
+		    end != df.examples)	
+		  where df.src_cd = 'Kirill' and df.db_type_id = 2;
+  END;
+  $$;
+
+5. Процедура переноса изменений в источнике Alena из stage в detail
+
+5.1. процедура Добавления
+  CREATE OR REPLACE PROCEDURE insert_function_alena()
+  LANGUAGE plpgsql
+  AS $$
+  begin
+     insert into detail."function" ("name"
+						  , description
+						  , arguments
+						  , "returns"
+						  , detailed_description
+						  , func_type_id 
+						  , db_type_id
+						  , examples
+						  , src_cd 
+						  , processed_dttm
+						  , effective_from_dttm
+						  , effective_to_dttm)					
+	  select sfa.function_mysql
+		  , sfa.description 
+		  , sfa.argument_func_mysql
+		  , sfa."returns" 
+		  , sfa.detailed_description
+		  , t.type_id 
+		  , 1
+		  , sfa.examples_mysql
+		  , 'Alena' as src_cd 
+		  , current_timestamp as processed_dttm
+		  , current_timestamp as effective_from_dttm
+		  , '2100.01.01'::timestamp as effective_to_dttm
+	  from stage.sql_functions_alena sfa                                 -- Конкретный источник  
+	  join detail.func_type t on case 
+								  when sfa.function_type = 'т' then 'текстовые'
+								  when sfa.function_type = 'ч' then 'числовые'
+								  when sfa.function_type = 'д/в' then 'дата и время'
+								  else sfa.function_type
+							  end = t."name" 
+	  left join (select * 
+				  from detail."function" 
+				  where src_cd = 'Alena') df                    -- Проверка только добавляемого источника
+	  on sfa.function_mysql = df."name" and t.type_id = df.func_type_id
+	  where df."name" is null;
+  END;
+  $$;
+
+5.2. Процедура Удаления
+  CREATE OR REPLACE PROCEDURE delete_function_alena()
+  LANGUAGE plpgsql
+  AS $$
+  begin
+      with del as (
+		  select df.*
+		  from detail."function" df
+		  left join stage.sql_functions_alena sfa
+		  on sfa.function_mysql = df."name" 
+		  where df.src_cd = 'Alena' and sfa.function_mysql is null)
+	  update detail."function" t2
+	  set effective_to_dttm = current_timestamp, 
+		  processed_dttm = current_timestamp,
+		  deleted_flg = 'true'
+	  from del
+	  where t2.* = del.*;
+  END;
+  $$;
+
+5.3. Процедура Изменения
+  CREATE OR REPLACE PROCEDURE update_function_alena()
+  LANGUAGE plpgsql
+  AS $$
+  begin
+  -- Добавление измененной записи
+	  insert into detail."function" ("name"
+							  , description
+							  , arguments
+							  , "returns"
+							  , detailed_description
+							  , func_type_id
+							  , db_type_id 
+							  , examples
+							  , src_cd 
+							  , processed_dttm
+							  , effective_from_dttm
+							  , effective_to_dttm)
+	  select sfa.function_mysql
+		  , sfa.description 
+		  , sfa.argument_func_mysql 
+		  , sfa."returns"
+		  , sfa.detailed_description
+		  , t.type_id 
+		  , 1
+		  , sfa.examples_mysql
+		  , 'Alena' as src_cd                                  -- Источник 
+		  , current_timestamp as processed_dttm
+		  , current_timestamp as effective_from_dttm
+		  , '2100.01.01'::timestamp as effective_to_dttm 
+	  from stage.sql_functions_alena sfa
+	  join detail.func_type t on case 
+									  when sfa.function_type = 'т' then 'текстовые'
+									  when sfa.function_type = 'ч' then 'числовые'
+									  when sfa.function_type = 'д/в' then 'дата и время'
+									  else sfa.function_type
+							     end = t."name"
+	  join detail."function" f						   
+		  on sfa.function_mysql = f."name" and t.type_id = f.func_type_id 
+			  and (sfa.description != f.description 
+			  or sfa.argument_func_mysql != f.arguments 
+			  or sfa."returns" != f."returns" 
+			  or sfa.detailed_description != f.detailed_description 
+			  or sfa.examples_mysql != f.examples)	
+		  where f.src_cd = 'Alena';
+  -- Изменение статуса измененной записи
+	  update detail."function" f2
+	  set processed_dttm = current_timestamp
+	    , effective_to_dttm = current_timestamp
+	  where exists (select f.id 
+		  from stage.sql_functions_alena sfa
+		  join detail.func_type t on case 
+										  when sfa.function_type = 'т' then 'текстовые'
+										  when sfa.function_type = 'ч' then 'числовые'
+										  when sfa.function_type = 'д/в' then 'дата и время'
+										  else sfa.function_type
+								     end = t."name"
+		  join detail."function" f						   
+		  on sfa.function_mysql = f."name" and t.type_id = f.func_type_id 
+			  and (sfa.description != f.description 
+			  or sfa.argument_func_mysql != f.arguments 
+			  or sfa."returns" != f."returns" 
+			  or sfa.detailed_description != f.detailed_description 
+			  or sfa.examples_mysql != f.examples)	
+		  where f.src_cd = 'Alena' and f2.id = f.id);
+  END;
+  $$;
+
+6. Процедура переноса изменений в источнике Slava из stage в detail
+
+6.1. Процедура Добавление записи
+  CREATE OR REPLACE PROCEDURE insert_function_slava()
+  LANGUAGE plpgsql
+  AS $$
+  BEGIN
+     insert into detail."function" ("name"
+						  , description
+						  , detailed_description
+						  , db_type_id
+						  , src_cd 
+						  , processed_dttm
+						  , effective_from_dttm
+						  , effective_to_dttm)					
+	  select sfs.function_sql
+		  , sfs.description 
+		  , sfs.detail_description
+		  , 1
+		  , 'Slava' as src_cd                                  -- Источник 
+		  , current_timestamp as processed_dttm
+		  , current_timestamp as effective_from_dttm
+		  , '2100.01.01'::timestamp as effective_to_dttm
+	  from stage.sql_functions_slava sfs                                 -- Конкретный источник  	
+	  left join (select * 
+				  from detail."function"
+				  where src_cd = 'Slava') df                    -- Проверка только добавляемого источника
+	  on sfs.function_sql = df."name" 
+	  where df."name" is null;
+  END;
+  $$;
+
+
+6.2. Процедура Удаление записи
+  CREATE OR REPLACE PROCEDURE delete_function_slava()
+  LANGUAGE plpgsql
+  AS $$
+  BEGIN
+	  with del as (
+		  select df.*
+		  from detail."function" df
+		  left join stage.sql_functions_slava sfs
+		  on sfs.function_sql = df."name" 
+		  where df.src_cd = 'Slava' and sfs.function_sql is null)
+	  update detail."function" f2
+	  set effective_to_dttm = current_timestamp, 
+		  processed_dttm = current_timestamp,
+		  deleted_flg = 'true'
+	  from del
+	  where f2.* = del.*;
+  END;
+  $$;
+
+
+6.3. Процедура Изменение записи
+  CREATE OR REPLACE PROCEDURE update_function_slava()
+  LANGUAGE plpgsql
+  AS $$
+  BEGIN
+  -- Изменение статуса старой записи
+      update detail."function" df2
+	  set processed_dttm = current_timestamp
+	    , effective_to_dttm = current_timestamp
+	  where exists (select df.id 
+		  from stage.sql_functions_slava sfs
+		  join detail."function" df						   
+		  on sfs.function_sql = df."name" and (sfs.description != df.description 
+			  or sfs.detail_description != df.detailed_description) 
+		  where df.src_cd = 'Slava' and df2.id = df.id);
+  -- Добавление измененной записи
+      insert into detail."function" ("name"
+						  , description
+						  , detailed_description
+						  , db_type_id
+						  , src_cd 
+						  , effective_from_dttm
+						  , effective_to_dttm 
+						  , processed_dttm)
+			  select sfs.function_sql
+					  , sfs.description 
+					  , sfs.detail_description
+					  , 1
+					  , 'Slava' as src_cd                                  -- Источник 
+					  , current_timestamp as effective_from_dttm 
+					  , '2100.01.01'::timestamp as effective_to_dttm
+					  , current_timestamp as processed_dttm
+				  from stage.sql_functions_slava sfs
+				  join detail."function" df						   
+				  on sfs.function_sql = df."name" and (sfs.description != df.description 
+					  or sfs.detail_description != df.detailed_description)	
+				  where df.src_cd = 'Slava';
+  END;
+  $$;
+
+

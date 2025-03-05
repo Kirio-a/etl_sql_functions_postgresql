@@ -1,0 +1,326 @@
+1. Подготовка таблицы SQL note (копия).xlsx к преобразованию в CSV формат: переименование и удаление лишних полей, удаление лишних строк и обьединений полей.
+ Поля таблицы:
+  function_type
+	description 
+	function_mysql
+	argument_func_mysql
+	function_postgresql
+	argument_func_postgresql
+	returns
+	detailed_description
+	examples_mysql
+	examples_postgresql
+	replacing
+
+2. Преобразование листа xlsx в csv формат чарез: сохранить как, указав SQL_functions.csv.
+
+3. Создание базы данных mybase в Терминале Линукс : create db mydb
+
+4. Создание схем stage, detail и mart в базе данных mybase с помощью dbeaver: Схемы -> Создать
+  
+5. Создание таблицы в dbeaver с соответствующими(одноименными) полями, с типом данных - text.
+CREATE TABLE stage.sql_functions (
+	function_type text NULL,
+	description text NULL,
+	function_mysql text NULL,
+	argument_func_mysql text NULL,
+	function_postgresql text NULL,
+	argument_func_postgresql text NULL,
+	"returns" text NULL,
+	detailed_description text NULL,
+	examples_mysql text NULL,
+	examples_postgresql text NULL,
+	replacing text NULL,
+	loaded_dttm information_schema."time_stamp" DEFAULT CURRENT_TIMESTAMP NULL
+  );
+
+6. Импорт данных из файла csv:
+      copy stage.sql_functions(function_type, description, function_mysql, argument_func_mysql, function_postgresql, argument_func_postgresql, "returns", detailed_description, examples_mysql, examples_postgresql, replacing) 
+        FROM '/tmp/SQL_functions.csv'
+        with(format csv, header true, DELIMITER ',', encoding UTF8); 
+
+--------------------------------------------------------------------------------
+
+7. Создание таблицы db_type
+  CREATE TABLE detail.db_type (
+	  db_id int4 NOT NULL,
+	  "name" varchar NULL,
+	  CONSTRAINT database_pk PRIMARY KEY (db_id)
+  );
+
+8. Заполнение таблицы db_type данными
+  insert into detail.db_type (db_id, name)
+  values (1, 'mysql'),
+	       (2, 'postgresql');
+
+9. Создание таблицы func_type
+  CREATE TABLE detail.func_type (
+	  type_id serial4 NOT NULL,
+	  "name" varchar NOT NULL,
+	  CONSTRAINT newtable_pk PRIMARY KEY (type_id)
+  );
+
+10. Заполнение таблицы type данными
+  insert into detail.func_type (name)
+  select distinct function_type 
+  from stage.sql_functions sf;
+
+11. Созание таблицы в схеме Detail с именем function
+  CREATE TABLE detail."function" (
+	  id serial4 NOT NULL,
+	  "name" varchar(255) NOT NULL,
+	  description varchar(255) NOT NULL,
+	  arguments varchar(255) NULL,
+	  "returns" varchar(255) NULL,
+	  detailed_description varchar NULL,
+	  func_type_id int4 NULL,
+	  db_type_id int4 NOT NULL,
+	  examples varchar NULL,
+	  src_cd varchar NULL,
+	  processed_dttm timestamp NULL,
+	  effective_from_dttm timestamp NULL,
+	  effective_to_dttm timestamp NULL,
+	  deleted_flg bool NULL,
+	  CONSTRAINT function_pk PRIMARY KEY (id),
+	  CONSTRAINT function_database_id_fkey FOREIGN KEY (db_type_id) REFERENCES detail.db_type(db_id) ON DELETE SET NULL,
+	  CONSTRAINT function_type_id_fkey FOREIGN KEY (func_type_id) REFERENCES detail.func_type(type_id) ON DELETE SET NULL
+  );
+
+
+12. Перенос данных из таблицы stage.sql_functions в таблицу function с учетом создания справочников database и type
+  insert into detail."function" ("name", description, arguments, "returns", detailed_description, func_type_id, db_type_id, examples)
+	select function_mysql
+		, description 
+		, argument_func_mysql
+		, "returns" 
+		, detailed_description
+		, t.type_id 
+		, 1
+		, examples_mysql
+		from stage.sql_functions sf
+	join detail.func_type t on sf.function_type = t."name"; 
+	
+insert into detail."function" ("name", description, arguments, "returns", detailed_description, func_type_id, db_type_id, examples)
+	select function_postgresql
+		, description 
+		, argument_func_postgresql
+		, "returns" 
+		, detailed_description
+		, t.type_id 
+		, 2
+		, case   --  Добавление примеров в ячейки, где функции совпадаюд по базам данных
+			when examples_postgresql not like ('') then examples_postgresql
+			else examples_mysql
+		  end
+	from stage.sql_functions sf
+	join detail.func_type t on sf.function_type = t."name" 
+	where function_postgresql not like ('') and function_postgresql not like (' ');  --  Удаление строк с отсутствующими функциями в Postgres
+
+13. Создание таблицы function_match
+  CREATE TABLE detail.function_match (
+	  id serial4 NOT NULL,
+	  link_type_id int4 NULL,
+	  mysql_func_id int4 NULL,
+	  postgresql_func_id int4 NULL,
+	  CONSTRAINT function_match_pk PRIMARY KEY (id),
+	  CONSTRAINT function_match_postgresql_func_id_fkey FOREIGN KEY (postgresql_func_id) REFERENCES detail."function"(id) ON DELETE CASCADE,
+	  CONSTRAINT function_match_sql_func_id_fkey FOREIGN KEY (sql_func_id) REFERENCES detail."function"(id) ON DELETE CASCADE
+  );
+
+14. Заполнение таблицы function_match данными
+  insert into detail.function_match (link_type_id, mysql_func_id, postgresql_func_id)
+    select 1
+	    , tt.id as mysql_id
+	    , t.id as postgres_id
+    from detail."function" tt 
+    left join detail."function" t 
+    on tt.name = t."name" and tt.db_type_id = 1
+     and t.db_type_id = 2
+    where t.id is not null;
+
+15. Заполнение колонок ресурсов таблицы function
+  update detail."function" 
+  set src_cd = 'Kirill',
+	  processed_dttm = current_timestamp,
+	  effective_from_dttm = current_timestamp,
+	  effective_to_dttm = '2100.01.01'::timestamp;
+
+------------- Внесение данных. Ресурс - Алена. -------------------------------------------------------- 
+
+16. Подготовка таблицы SQL note ALENA.xlsx к преобразованию в CSV формат: переименование и удаление лишних полей, удаление лишних строк и обьединений полей.
+	 Поля таблицы:
+    function_type
+    function_mysql
+    description
+    returns
+    argument_func_mysql
+    detailed_description
+    replasing
+    examples_mysql
+
+17. Преобразование листа xlsx в csv формат чарез: сохранить как, указав SQL note ALENA.csv.
+
+18. Создание таблицы в схеме Stage для загрузки данных.
+CREATE TABLE stage.sql_functions_alena (
+	function_type text NULL,
+	function_mysql text NULL,
+	description text NULL,
+	"returns" text NULL,
+	argument_func_mysql text NULL,
+	detailed_description text NULL,
+	replacing text NULL,
+	examples_mysql text NULL,
+	loaded_dttm information_schema."time_stamp" DEFAULT CURRENT_TIMESTAMP NULL
+);
+
+19. Импорт данных из файла csv:
+      copy stage.sql_functions_alena(function_type, function_mysql, description, "returns", argument_func_mysql, detailed_description, replacing, examples_mysql) 
+        FROM '/tmp/SQL note ALENA.csv' 
+        with(format csv, header true, DELIMITER ',', encoding UTF8); 
+
+20. Внесение данных ресурса Алена из таблицы stage.sql_function_alena в таблицу detail.function
+  insert into detail."function" ("name"
+						, description
+						, arguments
+						, "returns"
+						, detailed_description
+						, func_type_id
+						, db_type_id
+						, examples
+						, src_cd 
+						, processed_dttm
+						, effective_from_dttm
+						, effective_to_dttm)
+	select function_mysql
+		, description 
+		, argument_func_mysql
+		, "returns" 
+		, detailed_description
+		, t.type_id 
+		, 1
+		, examples_mysql
+		, 'Alena' as src_cd 
+		, current_timestamp as processed_dttm
+		, current_timestamp as effective_from_dttm
+		, '2100.01.01'::timestamp as effective_to_dttm
+	from stage.sql_functions_alena sfa
+	join detail.func_type t on case 
+								when sfa.function_type = 'т' then 'текстовые'
+								when sfa.function_type = 'ч' then 'числовые'
+								when sfa.function_type = 'д/в' then 'дата и время'
+								else sfa.function_type
+							end = t."name";
+
+------------- Внесение данных. Ресурс - Слава. -------------------------------------------------------- 
+
+21. Подготовка таблицы SQL note SLAVA.xlsx к преобразованию в CSV формат: переименование и удаление лишних полей, удаление лишних строк и обьединений полей.
+	 Поля таблицы:
+  sql_functions_slava
+  description
+  detail_description
+
+
+22. Преобразование листа xlsx в csv формат чарез: сохранить как, указав SQL note ALENA.csv.
+
+23. Создание таблицы в схеме Stage для загрузки данных.
+CREATE TABLE stage.sql_function_slava (
+	function_sql text NULL,
+	description text NULL,
+	detail_description text NULL,
+    loaded_dttm information_schema."time_stamp" DEFAULT CURRENT_TIMESTAMP NULL
+);
+
+24. Импорт данных из файла csv:
+  copy stage.sql_functions_slava(function_sql, description, detail_description) 
+    FROM '/tmp/Functions_SQL_Slava.csv' 
+    with(format csv, header true, DELIMITER ',', encoding UTF8);
+
+25. Внесение данных ресурса Слава из таблицы stage.sql_function_slava в таблицу detail.function
+  insert into detail."function" ("name"
+						  , description
+						  , detailed_description
+						  , db_type_id
+						  , src_cd 
+						  , processed_dttm
+						  , effective_from_dttm
+						  , effective_to_dttm)
+	  select function_sql
+		  , description 
+		  , detail_description
+		  , 1
+		  , 'Slava' as src_cd 
+		  , current_timestamp as processed_dttm
+		  , current_timestamp as effective_from_dttm
+		  , '2100.01.01'::timestamp as effective_to_dttm
+	  from stage.sql_functions_slava sfs;
+
+------------------------------------------------------------------------------------------------------
+Создание вспомогательных таблиц
+
+1. Создаю таблицу detail.dq в которой отображается аналитика изменения в detail.function после очередной инкрементальной загрузки
+  CREATE TABLE detail.dq (
+	  id text DEFAULT nextval('detail.dq_id_seq'::regclass) NOT NULL,
+	  test_name varchar NOT NULL,
+	  table_name varchar NULL,
+	  field_name varchar NULL,
+	  result_test varchar NULL,
+	  created_dttm information_schema."time_stamp" NOT NULL,
+	  started_dttm information_schema."time_stamp" NULL,
+	  finished_dttm information_schema."time_stamp" DEFAULT NULL::timestamp with time zone NULL,
+	  etl_run_id int4 NOT NULL
+  );
+
+2. Создание таблицы stage.etl_s2t для загрузки туда данных ИТЛ процесса (S2T)
+  CREATE TABLE stage.etl_s2t (
+	  etl_id int4 NULL,
+	  "name" text NULL,
+	  description text NULL
+  );
+
+3. Подготовка и преобразование документа S2T.xlsx в csv файл S2T.csv (ч-з сохранить как)
+
+4. Импорт данных из файла csv:
+      copy stage.etl_s2t 
+		FROM '/tmp/S2T.csv' 
+		WITH CSV HEADER DELIMITER ','; 
+
+5. Создание таблицы detail.etl
+  CREATE TABLE detail.etl (
+	  id int4 NOT NULL,
+	  code varchar NULL,
+	  "name" varchar NULL,
+	  description varchar NOT NULL,
+	  p_id int4 NULL,
+	  CONSTRAINT etl_pk PRIMARY KEY (id)
+  );
+
+6. Переношу данные таблицы в detail.etl
+  insert into detail.etl(id
+	  , name
+	  , description)
+  select etl_id
+	  , name
+	  , description
+  from stage.etl_s2t est; 
+
+7. Создание структуры таблицы detail.etl_run для отображения данных по всем инкрементальным загрузкам
+  CREATE TABLE detail.etl_run (
+	  id serial4 NOT NULL,
+	  etl_id int4 NOT NULL,
+	  started_dttm information_schema."time_stamp" DEFAULT CURRENT_TIMESTAMP NULL,
+	  finished_dttm information_schema."time_stamp" NULL,
+	  status varchar NULL,
+	  info text NULL,
+	  etl_p_id int4 NULL,
+	  CONSTRAINT etl_run_pk PRIMARY KEY (id)
+  );
+
+
+
+
+
+
+
+
+
+
