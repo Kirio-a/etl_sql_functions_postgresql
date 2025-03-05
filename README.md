@@ -1,55 +1,58 @@
-# etl_sql_functions_postgresql
+#### etl_sql_functions_postgresql
 ===================================================================
 
-ETL процесс справочника SQL-функций в Postgres
+##ETL процесс справочника SQL-функций в Postgres
 
-Структура проекта
+#Структура проекта
 -------------------------------------------------------------------
-bin/
-    |source.sh                            - 
-    |etl_launch.sh                        - запуск etl-процесса
-    |launch_detail.sh                     - исполняемый файл начала загрузки данных в слой detail
-    |detail.sh                            - исполняемый файл загрузки данных в слой detail
-    |launch_stage.sh                      - исполняемый файл начала загрузки данных в слой stage
-    |stage.sh                             - исполняемый файл загрузки данных в слой stage
-    
-sql/
-    |check_date_detail.sql                - скрипт проверки наличия изменений в слое detail по дате
-    |check_date_stage_alena.sql           - скрипт проверки актуальности etl в слое stage по дате для источника alena
-    |check_date_stage_kirill.sql          - скрипт проверки актуальности etl в слое stage по дате для источника kirill
-    |check_date_stage_slava.sql           - скрипт проверки актуальности etl в слое stage по дате для источника slava
+#bin/  
+    |source.sh                            -   
+    |etl_launch.sh                        - запуск etl-процесса  
+    |launch_detail.sh                     - исполняемый файл начала загрузки данных в слой detail  
+    |detail.sh                            - исполняемый файл загрузки данных в слой detail  
+    |launch_stage.sh                      - исполняемый файл начала загрузки данных в слой stage  
+    |stage.sh                             - исполняемый файл загрузки данных в слой stage  
+      
+#sql/  
+    |check_date_detail.sql                - скрипт проверки наличия изменений в слое detail по дате  
+    |check_date_stage_alena.sql           - скрипт проверки актуальности etl в слое stage по дате для источника alena  
+    |check_date_stage_kirill.sql          - скрипт проверки актуальности etl в слое stage по дате для источника kirill  
+    |check_date_stage_slava.sql           - скрипт проверки актуальности etl в слое stage по дате для источника slava  
 
-config/
-    |
+#config/  
+    |  
 
-etl/
-    |
+#etl/  
+    |  
+  
+#etl/  
+    |  
+  
+#log/  
+    |  
 
-log/
-    |
+#db_create/                               - создание базы данных  
+    |create_files/                       - файлы csv для заполнения таблиц бд слоя stage  
+    |  | Functions_SQL_Slava.csv         - файл csv для заполнения таблицы sql_functions_slava  
+    |  | S2T.csv                         - файл csv для заполнения таблицы s2t  
+    |  | SQL_functions.csv               - файл csv для заполнения таблицы sql_functions  
+    |  | SQL note ALENA.csv              - файл csv для заполнения таблицы sql_functions_alena  
+    |sql/  
+    |  | create_db.txt                   - скрипт для создания всех таблиц слоев stage и detail  
+    |  | create_procedures.txt           - скрипт для создания всех процедур и функций  
+    |S2T.xlsx                            - s2t  
+    |Структура данных.docs               - структура данных  
 
-db_create/                               - создание базы данных
-    |create_files/                       - файлы csv для заполнения таблиц бд слоя stage
-    |  | Functions_SQL_Slava.csv         - файл csv для заполнения таблицы sql_functions_slava
-    |  | S2T.csv                         - файл csv для заполнения таблицы s2t
-    |  | SQL_functions.csv               - файл csv для заполнения таблицы sql_functions
-    |  | SQL note ALENA.csv              - файл csv для заполнения таблицы sql_functions_alena
-    |sql/
-    |  | create_db.txt                   - скрипт для создания всех таблиц слоев stage и detail
-    |  | create_procedures.txt           - скрипт для создания всех процедур и функций
-    |S2T.xlsx                            - s2t
-    |Структура данных.docs               - структура данных
+#etl_files/                               - папка приема новой порции данных для etl-процесса  
+    |Functions_SQL_Slava(Для ИЗ).csv     - файл от источника Slava  
+    |SQL_note(для ИЗ).csv                - файл от источника Kirill  
+    |SQL note ALENA(для ИЗ).csv          - файл от источника Alena  
 
-etl_files/                               - папка приема новой порции данных для etl-процесса
-    |Functions_SQL_Slava(Для ИЗ).csv     - файл от источника Slava
-    |SQL_note(для ИЗ).csv                - файл от источника Kirill
-    |SQL note ALENA(для ИЗ).csv          - файл от источника Alena
-
-prev_etl_files/
-    |
+#prev_etl_files/  
+    |  
 
 
-Инструкция:
+##Инструкция:  
 --------------------------------------------------------------------
 1. Развертывание базы данных.
     - выполнить скрипт db_create/sql/create_db.sql
