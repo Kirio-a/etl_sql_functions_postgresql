@@ -75,6 +75,8 @@ prev_etl_files/
     - выполнить все запросы из файла etl_sql_functions_postgresql/db_create/Создание процедур и функций.txt  
 2. Запуск etl процесса 
 
+
+
   
   
 Сделать!!!
