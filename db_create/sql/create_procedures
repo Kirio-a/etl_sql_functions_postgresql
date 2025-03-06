@@ -1,5 +1,5 @@
-1. Процедура заполнения detail.dq данными
-  CREATE OR REPLACE PROCEDURE filling_dq(p_etl_id int)
+-- 1. Процедура заполнения detail.dq данными
+  CREATE OR REPLACE PROCEDURE detail.filling_dq(p_etl_id int)
   LANGUAGE plpgsql
   AS $$
   begin
@@ -118,7 +118,7 @@
   END; 
   $$;
 
-2. Создание процедуры начала заполнения таблицы etl_run (возвращает id_etl_run для дальнейшего исп-я в окончании заполнения таблицы etl_run и заполнения таблицы dq)
+-- 2. Создание процедуры начала заполнения таблицы etl_run (возвращает id_etl_run для дальнейшего исп-я в окончании заполнения таблицы etl_run и заполнения таблицы dq)
   CREATE OR REPLACE PROCEDURE detail.start_etl_run(IN etl_id integer, OUT etl_run_id integer)
    LANGUAGE plpgsql
   AS $procedure$
@@ -137,7 +137,7 @@
   $procedure$
   ;
 
-2.1. Создание функции начала заполнения таблицы etl_run (возвращает id_etl_run для дальнейшего исп-я в окончании заполнения таблицы etl_run и заполнения таблицы dq)
+-- 2.1. Создание функции начала заполнения таблицы etl_run (возвращает id_etl_run для дальнейшего исп-я в окончании заполнения таблицы etl_run и заполнения таблицы dq)
 CREATE OR REPLACE function detail.start_etl_run_f(a_etl_id integer, a_step_num integer)
 returns integer
    LANGUAGE plpgsql
@@ -162,8 +162,8 @@ returns integer
   $function$
   ;
 
-3. Создание процедуры окончания заполнения таблицы etl_run (происходит после завершения инкрементальной загрузки)
-  CREATE OR REPLACE PROCEDURE finish_etl_run(p_etl_id int)
+-- 3. Создание процедуры окончания заполнения таблицы etl_run (происходит после завершения инкрементальной загрузки)
+  CREATE OR REPLACE PROCEDURE detail.finish_etl_run(p_etl_id int)
   LANGUAGE plpgsql
   AS $$
   begin
@@ -174,7 +174,7 @@ returns integer
   END; 
   $$;
 
-4. Создание функции проверки завершения предыдущего шага таблицы etl_run
+-- 4. Создание функции проверки завершения предыдущего шага таблицы etl_run
  CREATE OR REPLACE function detail.check_etl_finish(etl_id_var integer, step_num_var integer)
 returns boolean
    LANGUAGE plpgsql
@@ -191,11 +191,11 @@ returns boolean
   $function$
   ;
 
-4. Перенос изменений в источнике Kirill из stage в detail
+-- 4. Перенос изменений в источнике Kirill из stage в detail
 
-4.1. Процедура Добавление записи
+-- 4.1. Процедура Добавление записи
 
-  CREATE OR REPLACE PROCEDURE insert_sql_functions()
+  CREATE OR REPLACE PROCEDURE detail.insert_sql_functions()
   LANGUAGE plpgsql
   AS $$
   BEGIN
@@ -256,8 +256,8 @@ returns boolean
   END;
   $$;
 
-4.2. Процедура Удаление записи
-  CREATE OR REPLACE PROCEDURE delete_sql_functions()
+-- 4.2. Процедура Удаление записи
+  CREATE OR REPLACE PROCEDURE detail.delete_sql_functions()
   LANGUAGE plpgsql
   AS $$
   BEGIN
@@ -284,8 +284,8 @@ returns boolean
   $$;
 
 
-4.3. Процедура Изменение записи
-  CREATE OR REPLACE PROCEDURE update_sql_functions()
+-- 4.3. Процедура Изменение записи
+  CREATE OR REPLACE PROCEDURE detail.update_sql_functions()
   LANGUAGE plpgsql
   AS $$
   BEGIN
@@ -384,10 +384,10 @@ returns boolean
   END;
   $$;
 
-5. Процедура переноса изменений в источнике Alena из stage в detail
+-- 5. Процедура переноса изменений в источнике Alena из stage в detail
 
-5.1. процедура Добавления
-  CREATE OR REPLACE PROCEDURE insert_function_alena()
+-- 5.1. процедура Добавления
+  CREATE OR REPLACE PROCEDURE detail.insert_function_alena()
   LANGUAGE plpgsql
   AS $$
   begin
@@ -430,8 +430,8 @@ returns boolean
   END;
   $$;
 
-5.2. Процедура Удаления
-  CREATE OR REPLACE PROCEDURE delete_function_alena()
+-- 5.2. Процедура Удаления
+  CREATE OR REPLACE PROCEDURE detail.delete_function_alena()
   LANGUAGE plpgsql
   AS $$
   begin
@@ -450,8 +450,8 @@ returns boolean
   END;
   $$;
 
-5.3. Процедура Изменения
-  CREATE OR REPLACE PROCEDURE update_function_alena()
+-- 5.3. Процедура Изменения
+  CREATE OR REPLACE PROCEDURE detail.update_function_alena()
   LANGUAGE plpgsql
   AS $$
   begin
@@ -518,10 +518,10 @@ returns boolean
   END;
   $$;
 
-6. Процедура переноса изменений в источнике Slava из stage в detail
+-- 6. Процедура переноса изменений в источнике Slava из stage в detail
 
-6.1. Процедура Добавление записи
-  CREATE OR REPLACE PROCEDURE insert_function_slava()
+-- 6.1. Процедура Добавление записи
+  CREATE OR REPLACE PROCEDURE detail.insert_function_slava()
   LANGUAGE plpgsql
   AS $$
   BEGIN
@@ -551,8 +551,8 @@ returns boolean
   $$;
 
 
-6.2. Процедура Удаление записи
-  CREATE OR REPLACE PROCEDURE delete_function_slava()
+-- 6.2. Процедура Удаление записи
+  CREATE OR REPLACE PROCEDURE detail.delete_function_slava()
   LANGUAGE plpgsql
   AS $$
   BEGIN
@@ -572,8 +572,8 @@ returns boolean
   $$;
 
 
-6.3. Процедура Изменение записи
-  CREATE OR REPLACE PROCEDURE update_function_slava()
+-- 6.3. Процедура Изменение записи
+  CREATE OR REPLACE PROCEDURE detail.update_function_slava()
   LANGUAGE plpgsql
   AS $$
   BEGIN

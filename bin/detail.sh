@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Начало записи в etl_run
-    RESULT=$(echo "SELECT detail.start_etl_run_f($etl_id, $step_num)" | PGPASSWORD=$pgpswd psql -d mydb)
+    RESULT=$(echo "SELECT detail.start_etl_run_f($etl_id, $step_num)" | PGPASSWORD=$pgpswd psql -d $db)
     array=($RESULT)
     etl_run_id=${array[2]:0:100}
     echo "-- Etl_run id: "$etl_run_id
@@ -12,7 +12,7 @@
 
 # проверка выполнения загрузки по наличию сегоднешней даты в поле processed_dttm (не гарантирует выполнения всех операций)
 RESULT=$(echo "select count(id) from detail.function
-where date_part('day', processed_dttm) = date_part('day', now()) and src_cd = '$src_cd';" | PGPASSWORD=$pgpswd psql -d mydb)
+where date_part('day', processed_dttm) = date_part('day', now()) and src_cd = '$src_cd';" | PGPASSWORD=$pgpswd psql -d $db)
 array=($RESULT)
 check_today=${array[2]:0:100}
 echo "-- Изменено строк: "$check_today

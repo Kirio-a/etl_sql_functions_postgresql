@@ -1,3 +1,7 @@
+Выполнять пункты следует по порядку. 
+Данная база данных разворачивалась и создавалась с помощъю DBeaver.
+Первые два пункта выполнять не нужно.
+
 1. Подготовка таблицы SQL note (копия).xlsx к преобразованию в CSV формат: переименование и удаление лишних полей, удаление лишних строк и обьединений полей.
  Поля таблицы:
   function_type
@@ -14,9 +18,12 @@
 
 2. Преобразование листа xlsx в csv формат чарез: сохранить как, указав SQL_functions.csv.
 
-3. Создание базы данных mybase в Терминале Линукс : create db mydb
+3. Создание базы данных mybase в Терминале Линукс : create db название_базы_данных
 
-4. Создание схем stage, detail и mart в базе данных mybase с помощью dbeaver: Схемы -> Создать
+4. Создание схем stage, detail и mart в базе данных
+create schema stage;
+create schema detail;
+create schema mart;
   
 5. Создание таблицы в dbeaver с соответствующими(одноименными) полями, с типом данных - text.
 CREATE TABLE stage.sql_functions (
@@ -34,9 +41,9 @@ CREATE TABLE stage.sql_functions (
 	loaded_dttm information_schema."time_stamp" DEFAULT CURRENT_TIMESTAMP NULL
   );
 
-6. Импорт данных из файла csv:
+6. Импорт данных из файла csv (нужно указать актуальный путь до нужной директории):
       copy stage.sql_functions(function_type, description, function_mysql, argument_func_mysql, function_postgresql, argument_func_postgresql, "returns", detailed_description, examples_mysql, examples_postgresql, replacing) 
-        FROM '/tmp/SQL_functions.csv'
+        FROM '.../etl_sql_functions_postgresql/db_create/create_files/SQL_functions.csv'
         with(format csv, header true, DELIMITER ',', encoding UTF8); 
 
 --------------------------------------------------------------------------------
@@ -146,6 +153,7 @@ insert into detail."function" ("name", description, arguments, "returns", detail
 	  effective_to_dttm = '2100.01.01'::timestamp;
 
 ------------- Внесение данных. Ресурс - Алена. -------------------------------------------------------- 
+Первые два пункта выполнять не нужно.
 
 16. Подготовка таблицы SQL note ALENA.xlsx к преобразованию в CSV формат: переименование и удаление лишних полей, удаление лишних строк и обьединений полей.
 	 Поля таблицы:
@@ -173,9 +181,9 @@ CREATE TABLE stage.sql_functions_alena (
 	loaded_dttm information_schema."time_stamp" DEFAULT CURRENT_TIMESTAMP NULL
 );
 
-19. Импорт данных из файла csv:
+19. Импорт данных из файла csv (нужно указать актуальный путь до нужной директории):
       copy stage.sql_functions_alena(function_type, function_mysql, description, "returns", argument_func_mysql, detailed_description, replacing, examples_mysql) 
-        FROM '/tmp/SQL note ALENA.csv' 
+        FROM '.../etl_sql_functions_postgresql/db_create/create_files/SQL note ALENA.csv' 
         with(format csv, header true, DELIMITER ',', encoding UTF8); 
 
 20. Внесение данных ресурса Алена из таблицы stage.sql_function_alena в таблицу detail.function
@@ -212,6 +220,7 @@ CREATE TABLE stage.sql_functions_alena (
 							end = t."name";
 
 ------------- Внесение данных. Ресурс - Слава. -------------------------------------------------------- 
+Первые два пункта выполнять не нужно.
 
 21. Подготовка таблицы SQL note SLAVA.xlsx к преобразованию в CSV формат: переименование и удаление лишних полей, удаление лишних строк и обьединений полей.
 	 Поля таблицы:
@@ -230,9 +239,9 @@ CREATE TABLE stage.sql_function_slava (
     loaded_dttm information_schema."time_stamp" DEFAULT CURRENT_TIMESTAMP NULL
 );
 
-24. Импорт данных из файла csv:
+24. Импорт данных из файла csv (нужно указать актуальный путь до нужной директории):
   copy stage.sql_functions_slava(function_sql, description, detail_description) 
-    FROM '/tmp/Functions_SQL_Slava.csv' 
+    FROM '.../etl_sql_functions_postgresql/db_create/create_files/Functions_SQL_Slava.csv' 
     with(format csv, header true, DELIMITER ',', encoding UTF8);
 
 25. Внесение данных ресурса Слава из таблицы stage.sql_function_slava в таблицу detail.function
@@ -277,11 +286,12 @@ CREATE TABLE stage.sql_function_slava (
 	  description text NULL
   );
 
-3. Подготовка и преобразование документа S2T.xlsx в csv файл S2T.csv (ч-з сохранить как)
+3. Подготовка и преобразование документа S2T.xlsx в csv файл S2T.csv (ч-з сохранить как). 
+Выполнять не нужно.
 
-4. Импорт данных из файла csv:
+4. Импорт данных из файла csv(нужно указать актуальный путь до нужной директории):
       copy stage.etl_s2t 
-		FROM '/tmp/S2T.csv' 
+		FROM '.../etl_sql_functions_postgresql/db_create/create_files/S2T.csv' 
 		WITH CSV HEADER DELIMITER ','; 
 
 5. Создание таблицы detail.etl
