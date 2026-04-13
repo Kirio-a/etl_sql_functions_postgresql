@@ -53,6 +53,11 @@ etl_files/                               - папка приема новой п
 
 prev_etl_files/  
     +  
+
+flask_sql_fun/                           - папка веб-сервиса на основе flask  
+    +static/                             - папка с файлами .css и .js  
+    +templates/                          - папка с .html файлами страниц веб-сервиса  
+    +run_sql_f.py                        - файл python для запуска веб-сервиса  
   
   
 ## Инструкция:  
@@ -67,6 +72,9 @@ prev_etl_files/
     - в файле etl_sql_functions_postgresql/bin/etl_launch.sh присвоить переменным db(название базы), pgpswd(пароль от базы данных), local_path(путь к директории) актуальные значения  
     - из терминала выпонить файл etl_sql_functions_postgresql/bin/etl_launch.sh  
 Файлы csv с обновленными данными помещаются в папку etl_sql_functions_postgresql/etl_files (не чаще одного раза в день, можно настраивать любую периодичность) и удаляются после загрузки в базу данных. Чтобы подстраховаться от потери данных отработанные csv файлы перемещаются в папку etl_sql_functions_postgresql/prev_etl_files  
+3. Работа с базой данных через веб-сервис на основе flask.
+    - запустить файл etl_sql_functions_postgresql/flask_sql_fun/run_sql_f.py
+    - 
   
 #### Вариант №2
 1. Развертывание базы данных.  
