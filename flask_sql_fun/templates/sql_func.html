@@ -1,0 +1,369 @@
+<html>
+
+<link rel="stylesheet" type="text/css" href="/static/css/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="/static/css/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="/static/css/demo.css">
+
+<script type="text/javascript" src="/static/js/jquery.min.js"></script>
+<script type="text/javascript" src="/static/js/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="/static/js/datagrid-filter.js"></script>
+
+
+<body  style="background-color: grey;">	
+	
+	<!-- navigation buttons -->	
+	<table>	
+		
+		<tr>
+		   <td>	<input id='page_1' type='button' value='Функции SQL'		    	        onclick="location.href='/sql_func'"		  	style="width: 250px; text-align: left;" />		</td>
+		   <td>	<input id='page_2' type='button' value='Список ETL процессов'		        onclick="location.href='/etl_list'"		  	style="width: 250px; text-align: right;" />		</td>
+		   <td>	<input id='page_3' type='button' value='Справочник ETL процессов'		    onclick="location.href='/etl_dict'"		  	style="width: 250px; text-align: right;" />		</td>
+		</tr>
+		<tr><td>	СПРАВОЧНИК ФУНКЦИЙ SQL	</td></tr>
+	<!-- main buttons -->			
+		<tr><td>	----------------------------------------------	</td></tr>
+		<td>	<input id='table_sql' type='button' value='Таблица функций SQL'		    	    onclick='f_datagrid_create()'		  	style="width: 250px; text-align: left;" />		</td>																	
+		<tr><td>	<input id='filling_fields' type='button' value='Форма для заполнения'		onclick='f06_add_form_fields()'			style="width: 250px; text-align: left;" />		</td></tr>	
+	</table>	
+
+	<!-- grid -->	
+	<table 	id="grid_01" style="height:300px; width: 1800px; display:none;"> </table>
+	
+	<!-- grid buttons -->	
+	<table>
+		<tr>
+			<td>	<input id='load_button' type='button' value='load'							onclick='datagrid_load()'		  		style="width: 80px; text-align: left;" />		</td>
+			<td>	<input id='insert_button' type='button' value='insert'						onclick='row_insert()'					style="width: 80px; text-align: left;" />		</td>
+			<td>	<input id='update_button' type='button' value='update'						onclick='row_update()'					style="width: 80px; text-align: left;" />		</td>
+			<td>	<input id='delete_button' type='button' value='delete'						onclick='row_delete()'					style="width: 80px; text-align: left;" />		</td>
+		</tr>																								
+	</table>	
+	
+	<!-- form -->
+	<form id='filling_form'>	</form>
+
+</body>
+
+
+<script>
+
+
+	function f_datagrid_create ()  {
+		$('#grid_01').datagrid({                             // нотация jquery
+			idField:	'id',	
+			columns:[[
+                 {field:'db_type',                           title:'База данных',                   width:100,        sortable: true }
+				,{field:'function_name',                     title:'Функция',                	    width:250,        sortable: true  }
+				,{field:'description',                       title: 'Описание',          	        width:250,        sortable: true }													
+				,{field:'arguments',                         title: 'Аргумент функции',         	width:250 }	
+				,{field:'returns',                           title: 'Функция возвращает',           width:150,        sortable: true }
+				,{field:'detailed_description',              title: 'Детальное описание',           width:350 }
+				,{field:'examples',                          title: 'Пример применения',	        width:250 }									
+				,{field:'function_type', 	                 title:'Тип функции',   	         	width:150,        sortable: true }				
+                ,{field:'id', 	                             title:'id', 	                	    width:50,        sortable: true }								
+			]]
+			,singleSelect: true	
+			,remoteSort: false	
+			,onClickRow (index, row) {
+				show_one_row ( row );
+			}
+		});
+		$('#grid_01').datagrid('enableFilter');		
+	}	
+
+
+	function f06_add_form_fields ()  {	
+		f = '';
+		f = f + '<form id="filling_form">';
+		f = f + '	<table>';
+		f = f + '	    <tr><td>	<input id="clear_form" type="button" value="Очистить форму"	 	        onclick="f_clear_form()"		  	style="width: 250px; text-align: left;" />		</td></tr>  ';
+	    f = f + '<tr> <td> <input type="hidden" id="fi_id"> </td></tr>';
+		f = f + '		<tr>	<td>База данных</td> <td>';
+        f = f + '				<input type="text" id="fi_db_type" list="desc_list_2" style="width: 200px;">';
+        f = f + '				<datalist id="desc_list_2">';
+        f = f + '					<option value="mysql">';
+        f = f + '					<option value="postgresql">';
+        f = f + '				</datalist>';
+        f = f + '			</td>  </tr>' ;	
+        f = f + '		<tr>	<td>Функция	</td>       <td> <input type="text" id="fi_function_name"   			 style="width: 400px;"> 	</td></tr>';	
+		f = f + '		<tr>	<td>Описание</td>		<td> <input type="text" id="fi_description" style="width: 600px;"> 	</td></tr>';
+		f = f + '		<tr>	<td>Аргумент функции</td>		<td> <input type="text" id="fi_arguments"   			 style="width: 600px;"> 	</td></tr>';								
+		f = f + '		<tr>	<td>Функция возвращает</td>		<td> <input type="text" id="fi_returns" style="width: 600px;"> 	</td></tr>';					
+		f = f + '		<tr>';
+        f = f + '			<td>Тип функции</td>';
+        f = f + '			<td>';
+        f = f + '				<input type="text" id="fi_function_type" list="desc_list" style="width: 200px;">';
+        f = f + '				<datalist id="desc_list">';
+        f = f + '					<option value="агрегатные">';
+        f = f + '					<option value="ранжирующие">';
+        f = f + '					<option value="текстовые">';
+        f = f + '					<option value="оконные">';
+        f = f + '					<option value="числовые">';
+        f = f + '					<option value="дополнительные">';
+        f = f + '					<option value="дата и время">';
+        f = f + '				</datalist>';
+        f = f + '			</td>';
+        f = f + '		</tr>';
+        f = f + '		<tr><td> 	Полное описание							</td>';
+        f = f + '			<td>';
+        f = f + '				<textarea id="fi_detailed_description" class="auto-resize"';
+        f = f + '					style="'
+        f = f + '						min-width: 300px;'
+        f = f + '						max-width: 1000px;'
+        f = f + '						width: 100%;'
+        f = f + '						min-height: 60px;'
+        f = f + '						resize: none;'
+        f = f + '						overflow-y: hidden;'
+        f = f + '						white-space: pre-wrap;'
+        f = f + '						word-wrap: break-word;'
+        f = f + '						font-family: inherit;'
+        f = f + '						padding: 5px;'
+        f = f + '					"'
+        f = f + '					placeholder="Введите текст...">';
+        f = f + '				</textarea>';
+        f = f + '			</td>';
+        f = f + '		</tr>';      						
+		f = f + '		<tr>';
+        f = f + '			<td>Пример применения</td>';
+        f = f + '			<td>';
+        f = f + '				<textarea id="fi_examples" class="auto-resize"';
+        f = f + '					style="'
+        f = f + '						min-width: 300px;'
+        f = f + '						max-width: 600px;'
+        f = f + '						width: 100%;'
+        f = f + '						min-height: 40px;'
+        f = f + '						resize: none;'
+        f = f + '						overflow-y: hidden;'
+        f = f + '						white-space: pre-wrap;'
+        f = f + '						word-wrap: break-word;'
+        f = f + '						font-family: inherit;'
+        f = f + '						padding: 5px;'
+        f = f + '					"'
+        f = f + '					placeholder="Введите текст...">';
+        f = f + '				</textarea>';
+        f = f + '			</td>';
+        f = f + '		</tr>';
+        f = f + '       <tr><td>	<input id="filling_fields" type="button" value="Аналог в смежной БД"		onclick="f_add_analog_fields()"			style="width: 250px; text-align: left;" />		</td></tr>';
+        f = f + '	</table>';				      
+		f = f + '</form>';		
+		
+		$('body').append(f);
+		
+		function autoResize(textarea) {
+            textarea.style.height = 'auto'; // сбрасываем предыдущую высоту
+            
+            let scrollHeight = textarea.scrollHeight;
+            const minHeight = parseFloat(getComputedStyle(textarea).minHeight) || 0;
+            
+            if (!textarea.value.trim() && !textarea.value.includes('\n')) {
+                scrollHeight = minHeight;
+            }
+            
+            textarea.style.height = scrollHeight + 'px';
+        }
+
+        const textareas = document.querySelectorAll('.auto-resize');
+        textareas.forEach(textarea => {
+            setTimeout(() => autoResize(textarea), 0);
+            textarea.addEventListener('input', () => autoResize(textarea));
+        });
+	}	
+
+	function f_add_analog_fields ()  {	
+		f = '';
+		f = f + '<form id="analog_form"><table>';
+
+		f = f + '		<tr>	<td>База данных</td> <td>';
+        f = f + '				<input type="text" id="fi_analog_db_type" list="desc_list_2" style="width: 200px;">';
+        f = f + '				<datalist id="fi_analog_db_type">';
+        f = f + '					<option value="mysql">';
+        f = f + '					<option value="postgresql">';
+        f = f + '				</datalist>';
+        f = f + '			</td>  </tr>' ;	
+		f = f + '		<tr>	<td>функция </td>		<td> <input type="text" id="fi_analog_function" 			 style="width: 300px;"> 	</td></tr>';				
+        f = f + '		<tr>	<td>аргумент </td>		<td> <input type="text" id="fi_analog_fun_args"   			 style="width: 600px;"> 	</td></tr>';
+		f = f + '		<tr>';
+        f = f + '			<td>пример использования</td>';
+        f = f + '			<td>';
+        f = f + '				<textarea id="fi_analog_fun_examples" class="auto-resize"';
+        f = f + '					style="'
+        f = f + '						min-width: 300px; max-width: 600px; width: 100%;'
+        f = f + '						min-height: 40px;'
+        f = f + '						resize: none; overflow-y: hidden;'
+        f = f + '						white-space: pre-wrap; word-wrap: break-word;'
+        f = f + '						font-family: inherit; padding: 5px">';
+        f = f + '				</textarea>';
+        f = f + '			</td>';
+        f = f + '		</tr>';
+		f = f + '</table></form>';		
+		
+		$('body').append(f);
+		
+		function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            
+            let scrollHeight = textarea.scrollHeight;
+            const minHeight = parseFloat(getComputedStyle(textarea).minHeight) || 0;
+            
+            if (!textarea.value.trim() && !textarea.value.includes('\n')) {
+                scrollHeight = minHeight;
+            }
+            
+
+            textarea.style.height = scrollHeight + 'px';
+        }
+
+        const textareas = document.querySelectorAll('.auto-resize');
+        textareas.forEach(textarea => {
+            setTimeout(() => autoResize(textarea), 0);
+
+            textarea.addEventListener('input', () => autoResize(textarea));
+        });
+
+	}
+
+	function datagrid_load ()  {	
+		$( '#grid_01' ).datagrid('loadData', []); 	
+		var url = '/table';
+		$.ajax({
+			url: 		'/table',	
+			type:		'GET',
+			success: 	function (data) {
+				console.log(data);
+				$( '#grid_01' ).datagrid('loadData', data.data ); 
+			}
+		});			
+	}
+	
+	function page_etl ()  {	
+		var url = '/etl_list'; 		
+	}	
+	
+    function f_clear_form ()  {	
+		    document.getElementById('fi_db_type').value = '';
+		    document.getElementById('fi_function_type').value = '';
+		    document.getElementById('fi_function_name').value = '';
+		    document.getElementById('fi_description').value = '';
+		    document.getElementById('fi_arguments').value = '';
+		    document.getElementById('fi_examples').value = '';
+		    document.getElementById('fi_returns').value = '';
+		    document.getElementById('fi_detailed_description').value = '';
+		    document.getElementById('fi_analog_db_type').value = '';
+		    document.getElementById('fi_analog_function').value = '';
+		    document.getElementById('fi_analog_fun_args').value = '';
+		    document.getElementById('fi_analog_fun_examples').value = '';			
+	    }		
+
+	function show_one_row ( row )   {
+		console.log ( row.function_mysql );
+		console.log ( row.id );
+		var url = '/evt_one?id=' + row.id;
+		$.ajax({
+			url: 		url,	
+			type:		'GET',			
+			success: 	function (data) {
+				console.log(data);
+				console.log(data.data[0].id);
+				$('#fi_db_type').val(data.data[0].db_type);
+				$('#fi_id').val(data.data[0].id);
+				$('#fi_function_type').val(data.data[0].function_type);	
+				$('#fi_function_name').val(data.data[0].function_name);				
+				$('#fi_description').val(data.data[0].description);				
+				$('#fi_arguments').val(data.data[0].arguments);
+				$('#fi_examples').val(data.data[0].examples);											
+				$('#fi_returns').val(data.data[0].returns);	
+				$('#fi_detailed_description').val(data.data[0].detailed_description);
+				$('#fi_analog_function').val(data.data[0].analog_function);	
+				$('#fi_analog_db_type').val(data.data[0].analog_db_type);				
+				$('#fi_analog_fun_args').val(data.data[0].analog_fun_args);				
+				$('#fi_analog_fun_examples').val(data.data[0].analog_fun_examples);															
+			}
+		});			    
+	}
+	
+	function row_delete ()   {
+		var selectedrow		= $('#grid_01').datagrid('getSelected');						
+		var selectedindex	= $('#grid_01').datagrid('getRowIndex', selectedrow );							
+		console.log ( selectedrow.id );
+		var url = '/del?id=' + selectedrow.id;
+		console.log ( url );
+		$.ajax({
+			url: 		url,		
+			type:		'DELETE',
+			success: 	function (data) {
+				console.log(data);
+				if (data['code'] == 200) 	{
+					$('#grid_01').datagrid ( 'deleteRow', selectedindex	);				
+				}
+			}
+		});			    
+	}	
+	
+	function row_insert ( row )   {	
+		data = {
+			db_type:	    	$('#fi_db_type').val(),
+			id:		            $('#fi_id').val(),			
+			function_type:		$('#fi_function_type').val(),
+			function_name:		$('#fi_function_name').val(),	
+			description:	    $('#fi_description').val(),										
+			arguments:		    $('#fi_arguments').val(),
+			examples:		    $('#fi_examples').val(),					
+			detailed_description:	$('#fi_detailed_description').val(),
+			returns:	        $('#fi_returns').val(),
+			analog_function:    $('#fi_analog_function').val(),	
+			analog_db_type:  	$('#fi_analog_db_type').val(),				
+			analog_fun_args: 	$('#fi_analog_fun_args').val(),				
+			analog_fun_examples:	$('#fi_analog_fun_examples').val()			
+		};
+		console.log(data);
+		var url = '/ins'
+		$.ajax({
+			contentType: 	'application/json',		
+			url: 			url,		
+			data:			JSON.stringify(data),
+			dataType:		'json',
+			type:			'post',			
+			success: 		function (data) {
+				console.log(data);
+				datagrid_load ();				
+			}
+		});			    
+	}	
+	
+	function row_update ( row )   {	
+		var selectedrow		= $('#grid_01').datagrid('getSelected');						
+		var selectedindex	= $('#grid_01').datagrid('getRowIndex', selectedrow );							
+		console.log ( selectedrow.id );	
+		data = {
+			db_type:	    	$('#fi_db_type').val(),
+			id:		            $('#fi_id').val(),			
+			function_type:		$('#fi_function_type').val(),
+			function_name:		$('#fi_function_name').val(),	
+			description:	    $('#fi_description').val(),										
+			arguments:		    $('#fi_arguments').val(),
+			examples:		    $('#fi_examples').val(),					
+			detailed_description:	$('#fi_detailed_description').val(),
+			returns:	        $('#fi_returns').val()		
+		};
+		console.log(data);
+		console.log(data.id);
+		var url = '/upd'
+		$.ajax({
+			contentType: 	'application/json',		
+			url: 			url,		
+			data:			JSON.stringify(data),
+			dataType:		'json',
+			type:			'patch',			
+			success: 		function (data) {
+				console.log(data);
+				datagrid_load ();								
+			}
+		});			    
+	}
+	
+		
+
+
+</script> 
+
+</html>

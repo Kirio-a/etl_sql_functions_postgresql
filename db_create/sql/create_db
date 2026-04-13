@@ -126,8 +126,8 @@ insert into detail."function" ("name", description, arguments, "returns", detail
 	    , t.id as postgres_id
     from detail."function" tt 
     left join detail."function" t 
-    on tt.name = t."name" and tt.db_type_id = 1
-     and t.db_type_id = 2
+    on tt.description = t.description and tt.returns = t.returns and tt.detailed_description = t.detailed_description and tt.db_type_id = 1
+     and t.db_type_id = 2 and tt.func_type_id = t.func_type_id and tt.src_cd = t.src_cd
     where t.id is not null;
 
 -- Заполнение колонок ресурсов таблицы function

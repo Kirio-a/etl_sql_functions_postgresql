@@ -1,0 +1,193 @@
+<html>
+
+<link rel="stylesheet" type="text/css" href="/static/css/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="/static/css/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="/static/css/demo.css">
+
+<script type="text/javascript" src="/static/js/jquery.min.js"></script>
+<script type="text/javascript" src="/static/js/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="/static/js/datagrid-filter.js"></script>
+
+
+<body  style="background-color: green;">	
+	
+	<!-- Блок списка ETL. Не редактируется, загружается из БД -->	
+	<table>
+	<!-- navigation buttons -->	
+	    <tr>
+		   <td>	<input id='page_1' type='button' value='Функции SQL'		    	   onclick="location.href='/sql_func'"		  	style="width: 250px; text-align: left;" />		</td>
+		   <td>	<input id='page_2' type='button' value='Список ETL процессов'		   onclick="location.href='/etl_list'"		  	style="width: 250px; text-align: right;" />		</td>
+		   <td>	<input id='page_3' type='button' value='Справочник ETL процессов'	   onclick="location.href='/etl_dict'"		  	style="width: 250px; text-align: right;" />		</td>
+		</tr>																
+
+	<!-- Блок Справочника ETL. Редактируется -->		
+	    <tr><td>	----------------------------------------------	</td></tr>	
+		<tr><td>	Справочник ETL-процессов	</td></tr>		
+		
+	<!-- main buttons -->		
+		<tr><td>	<input id='etl_dict' type='button' value='Справочник ETL процессов'		    	        onclick='f_datagrid2_create()'		  	style="width: 250px; text-align: left;" />		</td></tr>																	
+		<tr><td>	<input id='filling_fields' type='button' value='Форма для заполнения'		onclick='f06_add_form_fields()'			style="width: 250px; text-align: left;" />		</td></tr>	
+	</table>	
+
+	<!-- Таблица Справочника ETL -->	
+	<table 	id="table_etl_dict" style="height:300px; width: 1600px; display:none;"> </table>
+	
+	<!-- grid buttons -->	
+	<table>
+		<tr>
+			<td>	<input id='test_05' type='button' value='load'							onclick='datagrid2_load()'		  		style="width: 80px; text-align: left;" />		</td>
+			<td>	<input id='test_08' type='button' value='insert'						onclick='row_insert()'					style="width: 80px; text-align: left;" />		</td>
+			<td>	<input id='test_09' type='button' value='update'						onclick='row_update_etl()'					style="width: 80px; text-align: left;" />		</td>
+			<td>	<input id='test_10' type='button' value='delete'						onclick='row_delete_etl()'					style="width: 80px; text-align: left;" />		</td>
+		</tr>																								
+	</table>	
+	
+	<!-- form -->
+	<form id='test_form'>	</form>
+
+</body>
+
+
+<script>
+	
+	function f_datagrid2_create ()  {
+		$('#table_etl_dict').datagrid({                             // нотация jquery
+			idField:	'id',	
+			columns:[[
+				 {field:'id', 	                 title: 'id', 	                   	width:50 }
+				,{field:'name',                  title: 'Название',                 width:400 } 									
+				,{field:'description',           title: 'Описание',	                width:1150 }																
+			]]
+			,singleSelect: true		
+			,onClickRow (index, row) {
+				show_one_row ( row );
+			}
+		});
+		$('#table_etl_dict').datagrid('enableFilter');		
+	}	
+
+
+	function f06_add_form_fields ()  {	
+		f = '';
+		f = f + '<form id="test_form">';
+		f = f + '	<table>';
+		f = f + '<tr> <td> <input type="hidden" id="fi_id"> </td></tr>';		
+		f = f + '		<tr>	<td>Название  </td>		<td> <input type="text" id="fi_name"   		 style="width: 500px;"> 	</td></tr>';				
+		f = f + '		<tr><td> Описание </td>';
+        f = f + '			<td>';
+        f = f + '				<textarea id="fi_description" class="auto-resize"';
+        f = f + '					style="'
+        f = f + '						min-width: 300px;'
+        f = f + '						max-width: 1000px;'
+        f = f + '						width: 100%;'
+        f = f + '						min-height: 60px;'
+        f = f + '						resize: none;'
+        f = f + '						overflow-y: hidden;'
+        f = f + '						white-space: pre-wrap;'
+        f = f + '						word-wrap: break-word;'
+        f = f + '						font-family: inherit;'
+        f = f + '						padding: 5px;'
+        f = f + '					"'
+        f = f + '					placeholder="Введите текст...">';
+        f = f + '				</textarea>';
+        f = f + '			</td>';
+        f = f + '		</tr>';										
+		f = f + '	</table>';				
+		f = f + '</form>';				
+		$('body').append(f);
+	}	
+
+	function datagrid2_load ()  {	
+		$( '#table_etl_dict' ).datagrid('loadData', []); 	
+		var url = '/table_etl';
+		$.ajax({
+			url: 		'/table_etl',	
+			type:		'GET',
+			success: 	function (data) {
+				console.log(data);
+				$( '#table_etl_dict' ).datagrid('loadData', data.data ); 
+			}
+		});			
+	}	
+
+	function show_one_row ( row )   {
+		console.log ( row.id );
+		var url = '/evt_one_etl?id=' + row.id;
+		$.ajax({
+			url: 		url,	
+			type:		'GET',			
+			success: 	function (data) {
+				console.log(data);
+				$('#fi_id').val(data.data[0].id);
+				$('#fi_name').val(data.data[0].name);
+				$('#fi_description').val(data.data[0].description);
+			}
+		});			    
+	}	
+
+    function row_insert ( row )   {	
+		    data = {
+			    name:		$('#fi_name').val(),	
+			    description:	    $('#fi_description').val(),													
+		    };
+		    console.log(data);
+		    var url = '/ins_etl'
+		    $.ajax({
+			    contentType: 	'application/json',		
+			    url: 			url,		
+			    data:			JSON.stringify(data),
+			    dataType:		'json',
+			    type:			'post',			
+			    success: 		function (data) {
+				    console.log(data);
+				    datagrid2_load ();				
+			    }
+		    });			    
+	    }
+
+    function row_delete_etl ()   {
+		    var selectedrow		= $('#table_etl_dict').datagrid('getSelected');						
+		    var selectedindex	= $('#table_etl_dict').datagrid('getRowIndex', selectedrow );							
+		    console.log ( selectedrow.id );
+		    var url = '/del_etl?id=' + selectedrow.id;
+		    console.log ( url );
+		    $.ajax({
+			    url: 		url,		
+			    type:		'DELETE',
+			    success: 	function (data) {
+				    console.log(data);
+				    if (data['code'] == 200) 	{
+					    $('#table_etl_dict').datagrid ( 'deleteRow', selectedindex	);				
+				    }
+			    }
+		    });			    
+	    }
+
+	function row_update_etl ( row )   {	
+		var selectedrow		= $('#table_etl_dict').datagrid('getSelected');						
+		var selectedindex	= $('#table_etl_dict').datagrid('getRowIndex', selectedrow );							
+		console.log ( selectedrow.id );	
+		data = {
+		    id:	         $('#fi_id').val(),
+			name:	     $('#fi_name').val(),
+			description:	$('#fi_description').val(),		
+		};
+		console.log(data);
+		var url = '/upd_etl'
+		$.ajax({
+			contentType: 	'application/json',		
+			url: 			url,		
+			data:			JSON.stringify(data),
+			dataType:		'json',
+			type:			'patch',			
+			success: 		function (data) {
+				console.log(data);
+				datagrid2_load ();							
+			}
+		});			    
+	}		
+
+
+</script> 
+
+</html>

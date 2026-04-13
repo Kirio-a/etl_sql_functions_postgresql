@@ -1,0 +1,3 @@
+    function zzz() {
+        alert('Вася');
+    }

@@ -1,0 +1,89 @@
+<html>
+
+<link rel="stylesheet" type="text/css" href="/static/css/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="/static/css/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="/static/css/demo.css">
+
+<script type="text/javascript" src="/static/js/jquery.min.js"></script>
+<script type="text/javascript" src="/static/js/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="/static/js/datagrid-filter.js"></script>
+
+
+<body  style="background-color: green;">	
+	
+	<!-- Блок списка ETL. Не редактируется, загружается из БД -->	
+	<table>
+	    <tr>
+		   <td>	<input id='page_sql' type='button' value='Функции SQL'		    	        onclick="location.href='/sql_func'"		  	style="width: 250px; text-align: left;" />		</td>
+		   <td>	<input id='page_etl' type='button' value='Список ETL процессов'		    	        onclick="location.href='/etl_list'"		  	style="width: 250px; text-align: right;" />		</td>
+		   <td>	<input id='page_etl_dict' type='button' value='Справочник ETL процессов'		    	        onclick="location.href='/etl_dict'"		  	style="width: 250px; text-align: right;" />		</td>
+		</tr>
+		<tr><td>	----------------------------------------------	</td></tr>	
+		<tr><td>	Список ETL-процессов												</td></tr>							
+		<tr><td>	<input id='table_etl_list' type='button' value='Список ETL процессов'  onclick="f_datagrid1_create(); datagrid_load ()"		  	style="width: 250px; text-align: left;" />		</td> </tr>																		
+	</table>	
+
+	<!-- Таблица списка ETL -->	
+	<table 	id="table_etl_run" style="height:300px; width: 1100px; display:none;"> </table>
+
+	
+
+</body>
+
+
+<script>
+	
+	function f_datagrid1_create ()  {
+		//список всех процессов
+		$('#table_etl_run').datagrid({                             // нотация jquery
+			idField:	'id',	
+			columns:[[
+				 {field:'id', 	                 title: 'id', 	                     	width:40 }
+				,{field:'name',                  title: 'Этап',    		                width:300 } 									
+				,{field:'started_dttm',          title: 'Время ачала',	                width:300 }						
+				,{field:'finished_dttm',         title: 'Время окончания',              width:300 }	
+				,{field:'status',                title: 'статус',                       width:100 }										
+			]]
+			,singleSelect: true		
+			,onClickRow (index, row) {
+				show_one_row ( row );
+			}
+		});
+		$('#table_etl_run').datagrid('enableFilter');		
+	}	
+
+	function datagrid_load ()  {	
+		//f04_datagrid_create();
+		$( '#table_etl_run' ).datagrid('loadData', []); 	
+		var url = '/table_etl_run';
+		$.ajax({
+			url: 		'/table_etl_run',	
+			type:		'GET',
+			success: 	function (data) {
+				console.log(data);
+				$( '#table_etl_run' ).datagrid('loadData', data.data ); 
+			}
+		});			
+	}	
+
+	function show_one_row ( row )   {
+		console.log ( row.function_mysql );
+		console.log ( row.id );
+		var url = '/evt_one?function_mysql=' + row.function_mysql;
+		$.ajax({
+			url: 		url,	
+			type:		'GET',			
+			success: 	function (data) {
+				console.log(data);
+				console.log(data.data[0].function_mysql);
+				$('#fi_function_mysql').val(data.data[0].function_mysql);
+				$('#fi_function_postgresql').val(data.data[0].function_postgresql);
+				$('#fi_description').val(data.data[0].description);
+				$('#fi_returns').val(data.data[0].returns)				
+			}
+		});			    
+	}
+
+</script> 
+
+</html>
